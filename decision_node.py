@@ -77,6 +77,7 @@ print(purity(df_test, 'isFraud'))
 #print(df[i].isnull().sum().sum()) 
 
 def impute_missing_data(df, column):
+    pass
 '''
         if df[column].index.equals(pd.Index([0])):
             df[column]=df[column].fillna(df[column].mode()[0], inplace=True)
@@ -93,33 +94,40 @@ def impute_missing_data(df, column):
 '''            
       
 
-def gini_index(target):
-    unique, counts = np.unique(target, return_counts=True)
-    probabilities = counts/len(target)
+def gini_index(y):
+    _, counts = np.unique(y, return_counts=True)
+    probabilities = counts/len(y)
     gini_i = 1 - np.sum(probabilities**2)
     return gini_i
 
 
-def calculate_entropy(target):
-    _, counts = np.unique([df[target]], return_counts=True)
+def calculate_entropy(y):
+    _, counts = np.unique(y, return_counts=True)
     probabilities = counts / counts.sum()
     entropy = -np.sum(probabilities * np.log2(np.maximum(probabilities, 1e-10)))
     
     return entropy
 
+def best_split_threshold(df, column, impurity):
 
 
-#print(len(set(df['ProductCD'])))
+    # brute force
+    orderedvals = df[column].sort_values().values
+    
+    #percentiles
+    prctls = df[column].describe(percentiles=np.array(range(1,100))/100)
 
-def best_split_val(df, feature, impurity):
-    orderedvals = df[feature].sort_values().values
+     # exclude count, std, and mean
+    orderedvals = [prctls[i] for i in prctls.index if ~np.isin(i, ['count','mean','std'])]
+
+
     min_gini_split = float('inf')
     best_valsmids = None
     
     for i in range(len(orderedvals)-1):
         valsmids = (orderedvals[i] + orderedvals[i+1])/2
-        databelow = df['isFraud'][df[feature]] < valsmids
-        dataabove = df['isFraud'][df[feature]] >= valsmids
+        databelow = df['isFraud'][df[column]] < valsmids
+        dataabove = df['isFraud'][df[column]] >= valsmids
         
         giniB = impurity(databelow)
         giniA = impurity(dataabove)
