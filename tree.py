@@ -164,19 +164,48 @@ class DecisionTree:
     
     class DecisionNode:
 
-        def __init__(self, name):
-            self.name = name
+        def __init__(self, column):
+            self.name = column
+
+            self.chance_of_1 = dict     # { value: float } 
+            self.branches = dict            # { value: None | Node } 
+
+        def __str__(self):
+            return self.name
+        
+
+            def fit(self, X, y, depth):
+        if X.empty or depth == self.max_depth: # stopping criteria
+            return None
+
+        best_column_to_split = find_best_feature(X, y, weighted_entropy) # best_column_to_split
+       
+        node = DecisionTree.DecisionNode(best_column_to_split)
+
+        column_dropped = X[best_column_to_split]
+        X = X.drop(best_column_to_split, axis=1)
+
+        depth += 1 # adding to depth here for good reason!
+
+        for value in column_dropped.unique():
+            y_value = y[column_dropped == value]
             
-            
-            self.childs = {}
-            self.branch_tree = {} 
-            
-            
-            self.leaf_1 = set()
-            self.leaf_0 = set()
+            node.chance_of_1[value] = sum(y_value) / len(y_value)
+            node.branches[value] = self.fit(X[column_dropped == value], y[column_dropped == value], depth)
+
+        return node    
+
+    def predict_y(self, sample):
+        
+        value = sample[self.root] 
+        next = self.root.branches[value]
+        
+        
+        chance_of_1 = self.root.chance_of_1[value] 
+        return 
 
         
-        def find_x(self, sample):
+        def find_y(self, sample):
             node = self
             
 
@@ -191,9 +220,9 @@ class DecisionTree:
                     elif value in node.leaf_0:
                         return 0
                     else:
-                        for subnode_name in node.branch_tree.keys():
-                            if value in node.childs:
-                                node = node.branch_tree[subnode_name] # go to next node
+                        for subnode_name in node.branches.keys():
+                            if value in node.chance_of_1:
+                                node = node.branches[subnode_name] # go to next node
                 else:            
                     # not found 
                     return None
@@ -207,10 +236,10 @@ class DecisionTree:
                 exit("impossible error in add_value")
                 
         def add_branch_to_node(self, edge_name, node):
-            if node.name not in self.childs:
-                self.childs[node.name] = set()
-                self.branch_tree[node.name] = node
-            self.childs[node.name].add(edge_name)         
+            if node.name not in self.chance_of_1:
+                self.chance_of_1[node.name] = set()
+                self.branches[node.name] = node
+            self.chance_of_1[node.name].add(edge_name)         
         ### End of DecisionNode #########################################
 
     def __init__(self, max_depth = None):
@@ -223,41 +252,40 @@ class DecisionTree:
         self.root = self.fit(X, y, 0)
 
     def fit(self, X, y, depth):
-        best_feature = find_best_feature(X, y, weighted_entropy) # best_column_to_split
-       
-        node = DecisionTree.DecisionNode(best_feature)
+        if X.empty or depth == self.max_depth: # stopping criteria
+            return None
 
-        column_dropped = X[best_feature]
-        X = X.drop(best_feature, axis=1)
+        best_column_to_split = find_best_feature(X, y, weighted_entropy) # best_column_to_split
+       
+        node = DecisionTree.DecisionNode(best_column_to_split)
+
+        column_dropped = X[best_column_to_split]
+        X = X.drop(best_column_to_split, axis=1)
 
         depth += 1 # adding to depth here for good reason!
 
         for value in column_dropped.unique():
-            y_branch = y[column_dropped == value]
+            y_value = y[column_dropped == value]
             
-            s = y_branch.sum()
+            node.chance_of_1[value] = sum(y_value) / len(y_value)
+            node.branches[value] = self.fit(X[column_dropped == value], y[column_dropped == value], depth)
 
-            if s == 0:
-                # value always 0
-                node.add_value(value, "0")
-            elif s == len(y_branch):
-                # value always 1
-                node.add_value(value, "1")
-            elif X.empty or depth == self.max_depth:
-                most_common_value = str(y.mode()[0])
-                node.add_value(value, most_common_value)
-            else:
-                X_branch = X[column_dropped == value]
-                branch_node = self.fit(X_branch, y_branch, depth)
-                node.add_branch_to_node(value, branch_node)
+        return node    
+
+    def predict_y(self, sample):
         
-        return node
-            
+        value = sample[self.root] 
+        next = self.root.branches[value]
         
+        
+        chance_of_1 = self.root.chance_of_1[value] 
+        return 
+
+
     def predict(self, X_test):
         predictions = []
         for i,row in X_test.iterrows():
-            prediction = self.root.find_x(row)
+            prediction = self.root.find_y(row)
             predictions.append(prediction)
         
         return predictions
@@ -297,31 +325,6 @@ continuous = (
 target = (
     "isFraud"
 )
-
-
-class Node:
-    def __init__(self, depth):
-        self.chance_of_1 = dict # {value: chance_of_1}
-        self.column = None    # None if leaf, dict if Node 
-        self.depth = depth
-
-    def fit(self, X, y, depth) -> dict | None:
-        depth = depth + 1
-
-        if X.empty | depth == self.max_depth: # or any stopping/leaf condition: min_sample_split, min_leaf_sample ...
-            return None
-        
-        best_column_to_split = find_best_feature(X, y, impurity_method=weighted_entropy)
-        column_to_split = X[best_column_to_split]
-        X = X.drop(best_column_to_split, axis=1)
-
-        for value in column_to_split.unique():
-            value_y = y[column_to_split == value]
-            chance_of_1 = sum(value_y) / len(value_y)
-            self.chance_of_1[value] = chance_of_1
-            self.branch[value] = fit(X[column_to_split == value], y[column_to_split == value])
-            
-
 
 
 
