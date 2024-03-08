@@ -317,7 +317,11 @@ class Node:
 
         for value in column_to_split.unique():
             value_y = y[column_to_split == value]
-            self.chance_of_1[value] = sum(value_y) / len(value_y)
+            chance_of_1 = sum(value_y) / len(value_y)
+            self.chance_of_1[value] = chance_of_1
+            self.branch[value] = fit(X[column_to_split == value], y[column_to_split == value])
+            
+
 
 
 
