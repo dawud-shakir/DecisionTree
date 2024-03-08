@@ -300,10 +300,10 @@ target = (
 
 
 class Node:
-    def __init__(self, max_depth=None):
+    def __init__(self, depth):
         self.chance_of_1 = dict # {value: chance_of_1}
         self.column = None    # None if leaf, dict if Node 
-        self.max_depth = max_depth
+        self.depth = depth
 
     def fit(self, X, y, depth) -> dict | None:
         depth = depth + 1
