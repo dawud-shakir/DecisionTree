@@ -16,8 +16,8 @@ column = "card1"
 ### ####################################################################
 # load data
 df_train = pd.read_csv(os.getcwd() + '/train.csv')
-df_train = demo.remove_iterative(df_train, ["TransactionID"])
-df_train = demo.drop_missing_data(df_train)
+#df_train = demo.remove_iterative(df_train, ["TransactionID"])
+#df_train = demo.drop_missing_data(df_train)
 
 accuracy = []
 weighted_accuracy = []
@@ -54,14 +54,14 @@ X_test = df_test[column]
 
 
 timer_start = time.time()
-
+none_returned = 0
 predictions = []
 for value in X_test:
 
     
     chance_of_1 = one_tree.predict(value)
     if chance_of_1 == None:
-        
+        none_returned += 1
         predictions.append(np.random.randint(2))    # not found
     elif chance_of_1 < 0.5:
         predictions.append(0)
@@ -71,6 +71,12 @@ for value in X_test:
 timer_end = time.time()
 print(f"time to predict with one-tree node: {timer_end-timer_start}")
 
+p_nones = none_returned/len(X_test)
+print("none_returned=%.2f" % p_nones)
+p_found = (1.0-p_nones)
+print("found_accuracy=%.2f" % p_found)        
+
+
 start_at = 472433
 out_index = range(start_at, start_at+len(df_test))
 out_predictions = predictions
@@ -79,8 +85,4 @@ out_pd = out_pd.set_index("TransactionID", drop=True)
 out_pd.to_csv(os.getcwd() + "/out_pd.csv")
 
 
-n_not_found = predictions.count(None)
-n_found =  len(X_test)-n_not_found
-p_found = n_found / len(X_test)
-print("found_accuracy=%.2f" % p_found)        
 
