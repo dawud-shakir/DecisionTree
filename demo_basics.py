@@ -186,6 +186,7 @@ def best_split_threshold(df, column, impurity):
 
     for i in range(len(orderedvals)-1):
         if False:
+            # with mean-stepping!
             valsmids = (orderedvals[i] + orderedvals[i+1])/2
         
         valsmids = orderedvals[i]
